@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Amharic Keyboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        #output {
+            width: 100%;
+            max-width: 600px;
+            height: 150px;
+            margin-bottom: 20px;
+            padding: 10px;
+            font-size: 18px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            resize: vertical;
+        }
+        #keyboard, #numbers, #helpers, #special {
+            display: grid;
+            gap: 5px;
+            max-width: 600px;
+            width: 100%;
+        }
+        #keyboard {
+            grid-template-columns: repeat(10, 1fr);
+        }
+        #numbers, #special {
+            grid-template-columns: repeat(10, 1fr);
+            margin-top: 10px;
+        }
+        #helpers {
+            grid-template-columns: repeat(5, 1fr);
+            margin-top: 10px;
+        }
+        .key {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .key:hover {
+            background-color: #e0e0e0;
+        }
+        .helper {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+        @media (max-width: 600px) {
+            #keyboard {
+                grid-template-columns: repeat(7, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Online Amharic Keyboard</h1>
+    <textarea id="output" placeholder="Type or click the keys below..."></textarea>
+    <div id="helpers">
+        <div class="key helper" onclick="copyText()">ቅዳ</div>
+        <div class="key helper" onclick="clearText()">አፅዳ</div>
+        <div class="key helper" onclick="addSpace()">ባዶ ቦታ</div>
+        <div class="key helper" onclick="addNewLine()">አዲስ መስመር</div>
+        <div class="key helper" onclick="deleteLastChar()">ፊደል ሰርዝ</div>
+    </div>
+    <div id="keyboard"></div>
+    <div id="numbers"></div>
+    <div id="special"></div>
+
+    <script>
+        const amharicCharacters = [
+            'ሀ', 'ሁ', 'ሂ', 'ሃ', 'ሄ', 'ህ', 'ሆ', 'ለ', 'ሉ', 'ሊ',
+            'ላ', 'ሌ', 'ል', 'ሎ', 'ሐ', 'ሑ', 'ሒ', 'ሓ', 'ሔ', 'ሕ',
+            'ሖ', 'መ', 'ሙ', 'ሚ', 'ማ', 'ሜ', 'ም', 'ሞ', 'ሠ', 'ሡ',
+            'ሢ', 'ሣ', 'ሤ', 'ሥ', 'ሦ', 'ረ', 'ሩ', 'ሪ', 'ራ', 'ሬ',
+            'ር', 'ሮ', 'ሰ', 'ሱ', 'ሲ', 'ሳ', 'ሴ', 'ስ', 'ሶ', 'ሸ',
+            'ሹ', 'ሺ', 'ሻ', 'ሼ', 'ሽ', 'ሾ', 'ቀ', 'ቁ', 'ቂ', 'ቃ',
+            'ቄ', 'ቅ', 'ቆ', 'በ', 'ቡ', 'ቢ', 'ባ', 'ቤ', 'ብ', 'ቦ',
+            'ተ', 'ቱ', 'ቲ', 'ታ', 'ቴ', 'ት', 'ቶ', 'ኀ', 'ኁ', 'ኂ',
+            'ኃ', 'ኄ', 'ኅ', 'ኆ', 'ነ', 'ኑ', 'ኒ', 'ና', 'ኔ', 'ን',
+            'ኖ', 'አ', 'ኡ', 'ኢ', 'ኣ', 'ኤ', 'እ', 'ኦ', 'ከ', 'ኩ',
+            'ኪ', 'ካ', 'ኬ', 'ክ', 'ኮ', 'ኸ', 'ኹ', 'ኺ', 'ኻ', 'ኼ',
+            'ኽ', 'ኾ', 'ወ', 'ዉ', 'ዊ', 'ዋ', 'ዌ', 'ው', 'ዎ', 'ዐ',
+            'ዑ', 'ዒ', 'ዓ', 'ዔ', 'ዕ', 'ዖ', 'ዘ', 'ዙ', 'ዚ', 'ዛ',
+            'ዜ', 'ዝ', 'ዞ', 'ዠ', 'ዡ', 'ዢ', 'ዣ', 'ዤ', 'ዥ', 'ዦ',
+            'የ', 'ዩ', 'ዪ', 'ያ', 'ዬ', 'ይ', 'ዮ', 'ደ', 'ዱ', 'ዲ',
+            'ዳ', 'ዴ', 'ድ', 'ዶ', 'ጀ', 'ጁ', 'ጂ', 'ጃ', 'ጄ', 'ጅ',
+            'ጆ', 'ገ', 'ጉ', 'ጊ', 'ጋ', 'ጌ', 'ግ', 'ጎ', 'ጠ', 'ጡ',
+            'ጢ', 'ጣ', 'ጤ', 'ጥ', 'ጦ', 'ጨ', 'ጩ', 'ጪ', 'ጫ', 'ጬ',
+            'ጭ', 'ጮ', 'ጰ', 'ጱ', 'ጲ', 'ጳ', 'ጴ', 'ጵ', 'ጶ', 'ጸ',
+            'ጹ', 'ጺ', 'ጻ', 'ጼ', 'ጽ', 'ጾ', 'ፀ', 'ፁ', 'ፂ', 'ፃ',
+            'ፄ', 'ፅ', 'ፆ', 'ፈ', 'ፉ', 'ፊ', 'ፋ', 'ፌ', 'ፍ', 'ፎ',
+            'ፐ', 'ፑ', 'ፒ', 'ፓ', 'ፔ', 'ፕ', 'ፖ'
+        ];
+
+        const geezNumbers = ['፩', '፪', '፫', '፬', '፭', '፮', '፯', '፰', '፱', '፲', '፳', '፴', '፵', '፶', '፷', '፸', '፹', '፺', '፻', '፼'];
+        const specialChars = ['ሏ', 'ሗ', 'ሟ', 'ሧ', 'ሯ', 'ሷ', 'ሿ', 'ቇ', 'ቧ', 'ቷ', 'ኇ', 'ኗ', 'ኟ', 'ኧ', 'ኯ', 'ዟ', 'ዧ', 'ዷ', 'ጇ', 'ጧ', 'ጯ', 'ጷ', 'ፇ', 'ፏ', 'ፗ'];
+
+        const keyboard = document.getElementById('keyboard');
+        const numbers = document.getElementById('numbers');
+        const special = document.getElementById('special');
+        const output = document.getElementById('output');
+
+        amharicCharacters.forEach(char => {
+            const key = document.createElement('div');
+            key.className = 'key';
+            key.textContent = char;
+            key.addEventListener('click', () => {
+                insertAtCursor(output, char);
+            });
+            keyboard.appendChild(key);
+        });
+
+        for (let i = 0; i <= 9; i++) {
+            const key = document.createElement('div');
+            key.className = 'key';
+            key.textContent = i;
+            key.addEventListener('click', () => {
+                insertAtCursor(output, i.toString());
+            });
+            numbers.appendChild(key);
+        }
+
+        geezNumbers.concat(specialChars).forEach(char => {
+            const key = document.createElement('div');
+            key.className = 'key';
+            key.textContent = char;
+            key.addEventListener('click', () => {
+                insertAtCursor(output, char);
+            });
+            special.appendChild(key);
+        });
+
+        output.addEventListener('input', (e) => {
+            const cursorPosition = e.target.selectionStart;
+            const inputValue = e.target.value;
+            const lastChar = inputValue.charAt(cursorPosition - 1);
+            const amharicChar = getAmharicChar(lastChar);
+            
+            if (amharicChar) {
+                const newValue = inputValue.slice(0, cursorPosition - 1) + amharicChar + inputValue.slice(cursorPosition);
+                e.target.value = newValue;
+                e.target.setSelectionRange(cursorPosition, cursorPosition);
+            }
+        });
+
+        function getAmharicChar(latinChar) {
+            const mapping = {
+                'a': 'አ', 'u': 'ኡ', 'i': 'ኢ', 'e': 'እ', 'o': 'ኦ',
+                'h': 'ሀ', 'l': 'ለ', 'm': 'መ', 'r': 'ረ', 's': 'ሰ',
+                'q': 'ቀ', 'b': 'በ', 't': 'ተ', 'n': 'ነ', 'k': 'ከ',
+                'w': 'ወ', 'z': 'ዘ', 'y': 'የ', 'd': 'ደ', 'j': 'ጀ',
+                'g': 'ገ', 'x': 'ጠ', 'c': 'ጨ', 'p': 'ፐ', 'f': 'ፈ'
+            };
+            return mapping[latinChar.toLowerCase()] || null;
+        }
+
+        function insertAtCursor(myField, myValue) {
+            if (document.selection) {
+                myField.focus();
+                sel = document.selection.createRange();
+                sel.text = myValue;
+            } else if (myField.selectionStart || myField.selectionStart == '0') {
+                var startPos = myField.selectionStart;
+                var endPos = myField.selectionEnd;
+                myField.value = myField.value.substring(0, startPos)
+                    + myValue
+                    + myField.value.substring(endPos, myField.value.length);
+                myField.selectionStart = startPos + myValue.length;
+                myField.selectionEnd = startPos + myValue.length;
+            } else {
+                myField.value += myValue;
+            }
+            myField.focus();
+        }
+
+        function copyText() {
+            output.select();
+            document.execCommand('copy');
+            alert('ጽሑፉ ተቀድቷል!');
+        }
+
+        function clearText() {
+            output.value = '';
+            output.focus();
+        }
+
+        function addSpace() {
+            insertAtCursor(output, ' ');
+        }
+
+        function addNewLine() {
+            insertAtCursor(output, '\n');
+        }
+
+        function deleteLastChar() {
+            const currentValue = output.value;
+            const cursorPosition = output.selectionStart;
+            
+            if (cursorPosition > 0) {
+                output.value = currentValue.slice(0, cursorPosition - 1) + currentValue.slice(cursorPosition);
+                output.setSelectionRange(cursorPosition - 1, cursorPosition - 1);
+            }
+            output.focus();
+        }
+    </script>
+</body>
+</html>
